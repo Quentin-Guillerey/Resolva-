@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %} — Ingest{% endblock %}
+{% block content %}
+
+<h1>Ingest resolved tickets</h1>
+<p class="lede">Resolva reads resolved tickets only. It never writes back to the source system.
+  {% if ai_on %}Claude summarization is on.{% else %}Claude summarization is off — summaries pass the raw text through, clearly labelled. Add a key in <a href="{{ url_for('settings') }}">Settings</a> to enable it.{% endif %}
+</p>
+
+{% if results %}
+  <div class="results">
+    <h2>What happened</h2>
+    <table class="ledger">
+      <thead><tr><th>Route</th><th>Department</th><th>Sensitivity</th><th>Why</th><th>AI summary</th></tr></thead>
+      <tbody>
+      {% for r in results %}
+        <tr>
+          <td><span class="stamp stamp-{{ 'auto' if r.route=='auto' else 'manual' }}">{{ r.route }}</span></td>
+          <td>{{ r.department }}</td>
+          <td class="sens-{{ r.sensitivity }}"><span class="sens-tag">{{ r.sensitivity }}</span></td>
+          <td class="muted">{{ r.reason }}</td>
+          <td class="mono">{{ 'yes' if r.ai_used else 'passthrough' }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <p><a href="{{ url_for('dashboard') }}">View knowledge base</a> · <a href="{{ url_for('review_queue') }}">Open review queue</a></p>
+  </div>
+{% endif %}
+
+<div class="cols">
+  <section class="panel">
+    <h2>Demo data</h2>
+    <p class="muted">11 sanitized, synthetic Automower-style tickets — covers the auto-publish and SME-review paths.</p>
+    <form method="post" action="{{ url_for('load_demo') }}">
+      <button class="primary" type="submit">Load demo tickets</button>
+    </form>
+  </section>
+
+  <section class="panel">
+    <h2>Upload a CSV</h2>
+    <p class="muted">Columns: ticket_number, client_id, description, resolution, time_to_resolve, stakeholders, it_closed_no_followup.</p>
+    <form method="post" action="{{ url_for('ingest') }}" enctype="multipart/form-data">
+      <input type="file" name="csvfile" accept=".csv">
+      <button type="submit">Ingest CSV</button>
+    </form>
+  </section>
+</div>
+
+<section class="panel">
+  <h2>Or add one ticket</h2>
+  <form method="post" action="{{ url_for('ingest') }}" class="stack">
+    <div class="row">
+      <label>Ticket number <input name="ticket_number" placeholder="TK-2001"></label>
+      <label>Client id (source) <input name="client_id" placeholder="A200"></label>
+      <label>Time to resolve <input name="time_to_resolve" placeholder="20m"></label>
+    </div>
+    <label>Description <textarea name="description" rows="3"></textarea></label>
+    <label>Resolution <textarea name="resolution" rows="3"></textarea></label>
+    <label>Stakeholders <input name="stakeholders" placeholder="IT Support"></label>
+    <label class="check"><input type="checkbox" name="it_closed_no_followup"> IT-closed with no further interaction (eligible for auto-publish)</label>
+    <button class="primary" type="submit">Ingest ticket</button>
+  </form>
+</section>
+
+{% endblock %}
