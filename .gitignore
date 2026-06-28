@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# PyInstaller build output (rebuilt locally, never committed)
+build/
+dist/
+
+# Local runtime data — the real copies live in the per-user data folder
+# (%APPDATA%\Resolva etc.); these patterns catch any that appear here during
+# local testing. NOTE: data/demo_tickets.csv is intentionally NOT ignored.
+*.sqlite3
+resolva_kb.sqlite3
+resolva_audit.csv
+config.json
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
