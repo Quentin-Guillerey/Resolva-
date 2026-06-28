@@ -1,0 +1,7 @@
+Flask>=3.0
+requests>=2.31
+# No openai/gspread/python-dotenv needed:
+#   - Claude is called directly over HTTPS via requests (no SDK to bundle)
+#   - config is per-user JSON via the in-app Settings page (no .env)
+# pyinstaller is only needed to BUILD the .exe, not to run the web app:
+#   pip install pyinstaller
