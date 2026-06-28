@@ -1,13 +1,15 @@
 # Resolva
 
+[![CI](https://github.com/Quentin-Guillerey/Resolva-/actions/workflows/main.yml/badge.svg)](https://github.com/Quentin-Guillerey/Resolva-/actions/workflows/main.yml)
+
 **A self-maintaining, audit-ready, cross-departmental knowledge base — prototype.**
 
 Resolva turns resolved support tickets into a shared, plain-English knowledge
-base that every department can read, with an audit trail written for each
-entry as it's created. It reads from the ticketing system only and never
-writes back, so the source data stays clean.
+base that every department can read, with an audit trail written for each entry
+as it's created. It reads from the ticketing system only and never writes back,
+so the source data stays clean.
 
-> Status: working prototype / portfolio demo. The demo data is synthetic and
+> **Status: working prototype / portfolio demo.** The demo data is synthetic and
 > sanitized. No production deployment, no measured outcomes, no performance
 > claims. Items marked *roadmap* below are not built yet.
 
@@ -19,10 +21,10 @@ A ticket gets resolved somewhere in the business. Resolva takes that resolved
 ticket and:
 
 1. **Strips the identity.** The customer's CRM id is converted into an internal
-   6-digit account number and the CRM id is thrown away. Same customer always
-   maps to the same number, but the number can't be turned back into anything
-   the CRM would recognise — so a leak of the knowledge base exposes nothing
-   actionable.
+   6-digit account number and the CRM id is thrown away. The same customer
+   always maps to the same number, but the number can't be turned back into
+   anything the CRM would recognise — so a leak of the knowledge base exposes
+   nothing actionable.
 2. **Reads and sorts it.** A rule-based classifier tags the entry with a
    department and a sensitivity level (routine, cross-departmental, management,
    or legal). If the rules can't tell and you've added a Claude key, Claude is
@@ -30,8 +32,7 @@ ticket and:
 3. **Rewrites it for everyone.** Claude summarises the problem and the
    resolution into plain English any department can follow, and translates if
    the source was in another language. The **original record is kept attached**
-   in its own language — the summary is a shared layer on top, not a
-   replacement.
+   in its own language — the summary is a shared layer on top, not a replacement.
 4. **Decides who signs off.**
    - **Auto-publish** — only for IT-closed, routine tickets with no further
      interaction. Straight into the knowledge base, with an automatic audit row.
@@ -64,9 +65,9 @@ name on the review screen is typed in, not verified.)
 
 ## Build the desktop version (same codebase)
 
-The packaged build wraps the exact same app in a launcher that starts the
-server and opens your browser, so a non-technical teammate just double-clicks
-an icon — no Python needed on their machine.
+The packaged build wraps the exact same app in a launcher that starts the server
+and opens your browser, so a non-technical teammate just double-clicks an icon —
+no Python needed on their machine.
 
 ```
 pip install pyinstaller
@@ -76,7 +77,7 @@ pyinstaller resolva.spec
 Output: `dist/Resolva` (a single executable). Build it on the operating system
 you want to ship to — PyInstaller doesn't cross-compile, so build the Windows
 `.exe` on Windows. (Same antivirus/SmartScreen caveats apply to an unsigned
-internal build as noted for the toolkit; check with IT before wide rollout.)
+internal build; check with IT before wide rollout.)
 
 ---
 
@@ -106,10 +107,61 @@ folder, so they survive app updates.
 
 ---
 
+## Tests & continuous integration
+
+A small pytest suite covers the core loop. The tests run fully offline — no API
+key, no network — so they're deterministic and free to run. They don't just
+check that the app starts; they lock in the guarantees that make it audit-ready:
+
+- the demo set splits exactly into auto-publish vs SME-review as intended,
+- **nothing sensitive ever auto-publishes** — every auto entry is IT + routine,
+- **every legal-touching ticket is held for review**,
+- offline, the app reports that no AI summary was produced (no faked output),
+- account numbers are decoupled, stable, and never contain the CRM id,
+- the Flask routes respond and an SME approval writes a `manual` audit row.
+
+Run them locally:
+
+```
+pip install pytest
+python -m pytest -q
+```
+
+Every push and pull request to `main` runs the same suite on GitHub Actions; the
+badge at the top of this file reflects the latest result.
+
+---
+
+## Project layout
+
+```
+resolva/
+├─ app.py                 # Flask web app (routes)
+├─ launcher.py            # desktop entry point: starts the server, opens the browser
+├─ resolva/               # core logic (importable package)
+│  ├─ config.py           # per-user settings (no .env)
+│  ├─ accounts.py         # CRM id -> internal 6-digit account number (one-way)
+│  ├─ classifier.py       # rule-based + AI-fallback department / sensitivity / routing
+│  ├─ ai.py               # Claude summarize + translate (graceful offline fallback)
+│  ├─ ingestion.py        # the pipeline: classify -> summarize -> route -> log
+│  ├─ store.py            # SQLite knowledge base + review queue
+│  ├─ audit.py            # append-only CSV audit trail
+│  └─ notify.py           # SME Slack notification (optional)
+├─ templates/             # HTML (dashboard, entry, review, ingest, audit, settings)
+├─ static/style.css       # styling
+├─ data/demo_tickets.csv  # sanitized, synthetic demo tickets
+├─ tests/                 # pytest smoke tests
+├─ .github/workflows/     # GitHub Actions CI
+├─ resolva.spec           # PyInstaller build recipe
+└─ requirements.txt
+```
+
+---
+
 ## What was reused from the CSR Automation Toolkit
 
-Resolva is a separate system, but it deliberately carries over patterns that
-were already proven in the toolkit (a single-team tool that's already built):
+Resolva is a separate system, but it deliberately carries over patterns already
+proven in the toolkit (a single-team tool that's already built):
 
 - the **CSV audit-log structure**,
 - the **two-layer classifier** (rule-based first, AI only as a fallback),
@@ -124,13 +176,14 @@ system that extends that idea.
 
 ## Roadmap (not built yet)
 
-- Live ticketing-system integration (prototype simulates the feed via CSV/manual intake).
+- Live ticketing-system integration (prototype simulates the feed via CSV / manual intake).
 - Real per-department SME accounts and authentication.
 - Production-grade PII scrubbing on ingestion (demo data is pre-sanitized).
 - Wider account-number space / mapping table to remove collision risk at scale.
-- Asana/Zapier auto-routing for approved follow-ups (notification half only is built).
+- Asana / Zapier auto-routing for approved follow-ups (notification half is built).
 - Measured outcomes once piloted: review load, auto vs manual split, audit coverage.
 
 ---
 
-*GitHub repository link will go here once the repo is published.*
+Built by **Quentin Guillerey** — operations / customer-experience background.
+[LinkedIn](https://linkedin.com/in/quentin-guillerey)
