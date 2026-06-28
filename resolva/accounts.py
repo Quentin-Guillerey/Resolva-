@@ -1,0 +1,25 @@
+"""
+Account-number decoupling.
+
+The knowledge base must never store the CRM's client id. Instead each ticket's
+source client id is converted into an internal 6-digit account number using a
+one-way salted hash. Properties:
+
+  * Same source client -> same internal number (so the KB can still show
+    "this client has appeared before") .
+  * Not reversible: a leaked KB exposes nothing actionable about the CRM.
+  * The CRM id itself is dropped at ingestion and never written to disk.
+
+Prototype note: 6 digits = ~1M slots, so collisions are theoretically
+possible at large scale. Production would widen the space or keep a
+separate, access-controlled mapping table. Documented as roadmap, not hidden.
+"""
+
+import hashlib
+
+
+def to_internal_account(source_client_id: str, salt: str) -> str:
+    raw = f"{salt}:{source_client_id}".encode("utf-8")
+    digest = hashlib.sha256(raw).hexdigest()
+    number = int(digest[:12], 16) % 1_000_000
+    return f"{number:06d}"
