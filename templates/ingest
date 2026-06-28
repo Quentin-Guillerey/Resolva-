@@ -1,0 +1,29 @@
+{% extends "base.html" %} {% block title %} â€” Ingest{% endblock %} {% block content %}
+Ingest resolved tickets
+
+Resolva reads resolved tickets only. It never writes back to the source system. {% if ai_on %}Claude summarization is on.{% else %}Claude summarization is off â€” summaries pass the raw text through, clearly labelled. Add a key in Settings to enable it.{% endif %}
+
+{% if results %}
+What happened
+
+{% for r in results %} {% endfor %}
+Route	Department	Sensitivity	Why	AI summary
+{{ r.route }}	{{ r.department }}	{{ r.sensitivity }}	{{ r.reason }}	{{ 'yes' if r.ai_used else 'passthrough' }}
+View knowledge base Â· Open review queue
+
+{% endif %}
+Demo data
+
+11 sanitized, synthetic Automower-style tickets â€” covers the auto-publish and SME-review paths.
+
+Load demo tickets
+Upload a CSV
+
+Columns: ticket_number, client_id, description, resolution, time_to_resolve, stakeholders, it_closed_no_followup.
+
+  Ingest CSV
+Or add one ticket
+
+Ticket number  Client id (source)  Time to resolve 
+Description  Resolution  Stakeholders    IT-closed with no further interaction (eligible for auto-publish)  Ingest ticket
+{% endblock %}
