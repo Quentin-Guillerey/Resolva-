@@ -1,0 +1,129 @@
+"""
+Knowledge-base store (SQLite).
+
+Why SQLite rather than another CSV: the KB needs to be searched and filtered
+by department, browsed by stakeholders, and edited during review. SQLite gives
+that for free, is a single file (packages cleanly into the .exe), and needs no
+database server. The CSV audit log stays separate and append-only — different
+job, deliberately not the same file.
+
+One table holds every entry. `status` drives the workflow:
+  pending   -> in the SME review queue (manual path), not yet visible in the KB
+  published -> live in the knowledge base
+  rejected  -> kept for the trail, hidden from the KB
+
+The ORIGINAL source text is stored on every row (original_text /
+source_language) so the resolving department's own-language record stays
+attached and accessible, with the plain-English summary layered on top.
+"""
+
+import sqlite3
+from datetime import datetime
+from .config import db_path
+
+
+def _conn():
+    c = sqlite3.connect(db_path())
+    c.row_factory = sqlite3.Row
+    return c
+
+
+def init_db() -> None:
+    with _conn() as c:
+        c.execute("""
+        CREATE TABLE IF NOT EXISTS entries (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ticket_number       TEXT,
+            account_number      TEXT,
+            department          TEXT,
+            departments_touched TEXT,
+            sensitivity         TEXT,
+            source_language     TEXT,
+            original_text       TEXT,
+            summary_problem     TEXT,
+            summary_resolution  TEXT,
+            time_to_resolve     TEXT,
+            stakeholders        TEXT,
+            validation_process  TEXT,   -- auto | manual
+            classifier_reason   TEXT,
+            status              TEXT,    -- pending | published | rejected
+            reviewed_by         TEXT,
+            created_at          TEXT,
+            published_at        TEXT
+        )""")
+
+
+def add_entry(e: dict) -> int:
+    with _conn() as c:
+        cur = c.execute("""
+        INSERT INTO entries (
+            ticket_number, account_number, department, departments_touched,
+            sensitivity, source_language, original_text, summary_problem,
+            summary_resolution, time_to_resolve, stakeholders,
+            validation_process, classifier_reason, status, reviewed_by,
+            created_at, published_at
+        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", (
+            e.get("ticket_number"), e.get("account_number"), e.get("department"),
+            ", ".join(e.get("departments_touched", [])), e.get("sensitivity"),
+            e.get("source_language"), e.get("original_text"),
+            e.get("summary_problem"), e.get("summary_resolution"),
+            e.get("time_to_resolve"), e.get("stakeholders"),
+            e.get("validation_process"), e.get("classifier_reason"),
+            e.get("status"), e.get("reviewed_by", ""),
+            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            e.get("published_at", ""),
+        ))
+        return cur.lastrowid
+
+
+def get_entry(entry_id: int):
+    with _conn() as c:
+        row = c.execute("SELECT * FROM entries WHERE id=?", (entry_id,)).fetchone()
+        return dict(row) if row else None
+
+
+def list_published(department=None, query=None) -> list:
+    sql = "SELECT * FROM entries WHERE status='published'"
+    args = []
+    if department and department != "All":
+        sql += " AND department=?"
+        args.append(department)
+    if query:
+        sql += " AND (summary_problem LIKE ? OR summary_resolution LIKE ? OR ticket_number LIKE ?)"
+        args += [f"%{query}%"] * 3
+    sql += " ORDER BY published_at DESC, id DESC"
+    with _conn() as c:
+        return [dict(r) for r in c.execute(sql, args).fetchall()]
+
+
+def list_pending() -> list:
+    with _conn() as c:
+        return [dict(r) for r in c.execute(
+            "SELECT * FROM entries WHERE status='pending' ORDER BY created_at"
+        ).fetchall()]
+
+
+def list_departments() -> list:
+    with _conn() as c:
+        rows = c.execute(
+            "SELECT DISTINCT department FROM entries WHERE status='published' ORDER BY department"
+        ).fetchall()
+    return [r["department"] for r in rows]
+
+
+def update_review(entry_id: int, problem: str, resolution: str,
+                  reviewed_by: str, decision: str) -> None:
+    """decision: 'published' or 'rejected'."""
+    published_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S") if decision == "published" else ""
+    with _conn() as c:
+        c.execute("""
+        UPDATE entries SET summary_problem=?, summary_resolution=?,
+            reviewed_by=?, status=?, published_at=? WHERE id=?""",
+            (problem, resolution, reviewed_by, decision, published_at, entry_id))
+
+
+def counts() -> dict:
+    with _conn() as c:
+        def n(status):
+            return c.execute("SELECT COUNT(*) FROM entries WHERE status=?", (status,)).fetchone()[0]
+        return {"published": n("published"), "pending": n("pending"), "rejected": n("rejected")}
