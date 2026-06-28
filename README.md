@@ -1,6 +1,6 @@
 # Resolva
 
-[![CI](https://github.com/Quentin-Guillerey/Resolva-/actions/workflows/main.yml/badge.svg)](https://github.com/Quentin-Guillerey/Resolva-/actions/workflows/main.yml)
+[![CI](https://github.com/Quentin-Guillerey/Resolva/actions/workflows/main.yml/badge.svg)](https://github.com/Quentin-Guillerey/Resolva/actions/workflows/main.yml)
 
 **A self-maintaining, audit-ready, cross-departmental knowledge base — prototype.**
 
