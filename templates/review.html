@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %} — Review queue{% endblock %}
+{% block content %}
+
+<h1>SME review queue</h1>
+<p class="lede">Anything cross-departmental, management-involved, or legal-adjacent waits here for a department SME. Every legal-touching case is reviewed — no exceptions.</p>
+
+{% if not entries %}
+  <div class="empty"><p>Queue is empty. Nothing is waiting for review.</p></div>
+{% else %}
+  <ul class="cards">
+    {% for e in entries %}
+      <li class="card sens-{{ e.sensitivity }}">
+        <a class="card-link" href="{{ url_for('review_detail', entry_id=e.id) }}">
+          <div class="card-top">
+            <span class="dept">{{ e.department }}</span>
+            <span class="sens-tag">{{ e.sensitivity }}</span>
+          </div>
+          <p class="problem">{{ e.summary_problem }}</p>
+          <p class="reason muted">{{ e.classifier_reason }}</p>
+          <div class="card-foot mono">
+            <span>{{ e.ticket_number }}</span>
+            <span>acct {{ e.account_number }}</span>
+            <span>review →</span>
+          </div>
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
+{% endif %}
+
+{% endblock %}

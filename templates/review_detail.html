@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %} — Review {{ e.ticket_number }}{% endblock %}
+{% block content %}
+
+<a class="back" href="{{ url_for('review_queue') }}">← Review queue</a>
+
+<article class="detail sens-{{ e.sensitivity }}">
+  <div class="detail-head">
+    <span class="dept">{{ e.department }}</span>
+    <span class="sens-tag">{{ e.sensitivity }}</span>
+  </div>
+  <p class="reason muted">Flagged for review: {{ e.classifier_reason }}</p>
+
+  <details class="source" open>
+    <summary>Original source record ({{ e.source_language }})</summary>
+    <pre>{{ e.original_text }}</pre>
+  </details>
+
+  <form method="post" action="{{ url_for('review_detail', entry_id=e.id) }}" class="stack">
+    <label>Problem (edit before publishing)
+      <textarea name="summary_problem" rows="3">{{ e.summary_problem }}</textarea></label>
+    <label>Resolution (edit before publishing)
+      <textarea name="summary_resolution" rows="3">{{ e.summary_resolution }}</textarea></label>
+
+    <dl class="meta-grid mono">
+      <div><dt>Ticket</dt><dd>{{ e.ticket_number }}</dd></div>
+      <div><dt>Account</dt><dd>{{ e.account_number }}</dd></div>
+      <div><dt>Time to resolve</dt><dd>{{ e.time_to_resolve or '—' }}</dd></div>
+      <div><dt>Stakeholders</dt><dd>{{ e.stakeholders or '—' }}</dd></div>
+    </dl>
+
+    <label>Your name (reviewing SME)
+      <input name="reviewed_by" placeholder="e.g. Dana — Warranty SME"></label>
+
+    <div class="actions">
+      <button class="primary" type="submit" name="action" value="approve">Approve & publish</button>
+      <button class="danger" type="submit" name="action" value="reject">Reject</button>
+    </div>
+  </form>
+</article>
+
+{% endblock %}

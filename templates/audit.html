@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %} — Audit log{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div>
+    <h1>Audit log</h1>
+    <p class="lede">Append-only CSV, written the moment each entry is published — automatically or by an SME. Stored as a plain file an auditor can open in Excel.</p>
+  </div>
+</div>
+
+{% if not rows %}
+  <div class="empty"><p>No audit entries yet. Publish something to start the trail.</p></div>
+{% else %}
+  <div class="ledger-wrap">
+    <table class="ledger mono">
+      <thead>
+        <tr>
+          <th>Ticket</th><th>Date</th><th>Account</th><th>Description</th>
+          <th>Resolution</th><th>Time</th><th>Stakeholders</th><th>Validation</th><th>Comments</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+          <tr>
+            <td>{{ r['Ticket Number'] }}</td>
+            <td>{{ r['Date'] }}</td>
+            <td>{{ r['Account Number'] }}</td>
+            <td class="wrap">{{ r['Description'] }}</td>
+            <td class="wrap">{{ r['Resolution'] }}</td>
+            <td>{{ r['Time to Resolve'] }}</td>
+            <td class="wrap">{{ r['Stakeholders Involved'] }}</td>
+            <td><span class="stamp stamp-{{ r['Validation Process'] }}">{{ r['Validation Process'] }}</span></td>
+            <td class="wrap muted">{{ r['Additional Comments'] }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endif %}
+
+{% endblock %}

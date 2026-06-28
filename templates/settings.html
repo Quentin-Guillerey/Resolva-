@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %} — Settings{% endblock %}
+{% block content %}
+
+<h1>Settings</h1>
+<p class="lede">All optional. Resolva runs fully offline with rule-based routing and raw-text passthrough if you leave everything blank. Saved on this computer only — never bundled into the app, never shared between teammates.</p>
+
+<div class="status-row">
+  <span class="pill {{ 'on' if ai_on else 'off' }}">Claude summarization: {{ 'on' if ai_on else 'off' }}</span>
+  <span class="pill {{ 'on' if slack_on else 'off' }}">SME Slack alerts: {{ 'on' if slack_on else 'off' }}</span>
+</div>
+
+<form method="post" action="{{ url_for('settings') }}" class="stack panel">
+  <h2>Claude (plain-English summary + translation, and classifier fallback)</h2>
+  <label>Anthropic API key
+    <input type="password" name="ANTHROPIC_API_KEY" value="{{ cfg.ANTHROPIC_API_KEY }}" placeholder="sk-ant-...">
+  </label>
+  <label>Model
+    <input name="ANTHROPIC_MODEL" value="{{ cfg.ANTHROPIC_MODEL }}" placeholder="claude-sonnet-4-6">
+  </label>
+
+  <h2>Slack (SME notification when an entry hits the review queue)</h2>
+  <label>Slack webhook URL
+    <input name="SLACK_WEBHOOK_URL" value="{{ cfg.SLACK_WEBHOOK_URL }}" placeholder="https://hooks.slack.com/services/...">
+  </label>
+
+  <button class="primary" type="submit">Save settings</button>
+</form>
+
+<p class="muted">Config file location is per-user (e.g. <span class="mono">%APPDATA%\Resolva\config.json</span> on Windows). The knowledge base and audit log live in the same folder, so they survive app updates.</p>
+
+{% endblock %}

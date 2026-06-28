@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Resolva{% block title %}{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="{{ url_for('dashboard') }}">
+      Resolva<span class="brand-mark">·</span><span class="brand-sub">knowledge ledger</span>
+    </a>
+    <nav>
+      <a href="{{ url_for('dashboard') }}">Knowledge base</a>
+      <a href="{{ url_for('review_queue') }}">
+        Review queue
+        {% if counts.pending %}<span class="badge">{{ counts.pending }}</span>{% endif %}
+      </a>
+      <a href="{{ url_for('ingest') }}">Ingest</a>
+      <a href="{{ url_for('audit_view') }}">Audit log</a>
+      <a href="{{ url_for('settings') }}">Settings</a>
+    </nav>
+  </header>
+
+  <main>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="foot">
+    Prototype — demo data is sanitized and synthetic. No production use, no measured outcomes.
+  </footer>
+</body>
+</html>

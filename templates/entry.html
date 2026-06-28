@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %} — {{ e.ticket_number }}{% endblock %}
+{% block content %}
+
+<a class="back" href="{{ url_for('dashboard') }}">← Knowledge base</a>
+
+<article class="detail sens-{{ e.sensitivity }}">
+  <div class="detail-head">
+    <span class="dept">{{ e.department }}</span>
+    <span class="stamp stamp-{{ e.validation_process }}">
+      {{ 'AUTO-PUBLISHED' if e.validation_process == 'auto' else 'SME-REVIEWED' }}
+    </span>
+  </div>
+
+  <h1>Problem</h1>
+  <p class="lead-text">{{ e.summary_problem }}</p>
+  <h1>Resolution</h1>
+  <p class="lead-text">{{ e.summary_resolution }}</p>
+
+  <dl class="meta-grid mono">
+    <div><dt>Ticket</dt><dd>{{ e.ticket_number }}</dd></div>
+    <div><dt>Account</dt><dd>{{ e.account_number }}</dd></div>
+    <div><dt>Department</dt><dd>{{ e.department }}</dd></div>
+    <div><dt>Sensitivity</dt><dd>{{ e.sensitivity }}</dd></div>
+    <div><dt>Time to resolve</dt><dd>{{ e.time_to_resolve or '—' }}</dd></div>
+    <div><dt>Stakeholders</dt><dd>{{ e.stakeholders or '—' }}</dd></div>
+    <div><dt>Source language</dt><dd>{{ e.source_language }}</dd></div>
+    <div><dt>Validated by</dt><dd>{{ e.reviewed_by or 'automatic' }}</dd></div>
+  </dl>
+
+  <details class="source">
+    <summary>Original source record ({{ e.source_language }}) — kept attached</summary>
+    <pre>{{ e.original_text }}</pre>
+    <p class="muted">The resolving department's own-language record is preserved verbatim;
+       the summary above is the shared plain-English layer.</p>
+  </details>
+</article>
+
+{% endblock %}

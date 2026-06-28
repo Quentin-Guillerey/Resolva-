@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %} — Knowledge base{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div>
+    <h1>Knowledge base</h1>
+    <p class="lede">Resolved cases, summarized in plain English and validated for sharing across departments.</p>
+  </div>
+  <div class="tally">
+    <span><strong>{{ counts.published }}</strong> published</span>
+    <span><strong>{{ counts.pending }}</strong> in review</span>
+  </div>
+</div>
+
+<form class="filters" method="get" action="{{ url_for('dashboard') }}">
+  <input type="search" name="q" value="{{ query }}" placeholder="Search problem, resolution, or ticket number">
+  <select name="department" onchange="this.form.submit()">
+    {% for d in departments %}
+      <option value="{{ d }}" {% if d == current_dept %}selected{% endif %}>{{ d }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit">Search</button>
+</form>
+
+{% if not entries %}
+  <div class="empty">
+    <p>Nothing published yet.</p>
+    <form method="post" action="{{ url_for('load_demo') }}">
+      <button class="primary" type="submit">Load sanitized demo tickets</button>
+    </form>
+    <p class="muted">Or <a href="{{ url_for('ingest') }}">ingest your own</a>.</p>
+  </div>
+{% else %}
+  <ul class="cards">
+    {% for e in entries %}
+      <li class="card sens-{{ e.sensitivity }}">
+        <a class="card-link" href="{{ url_for('entry_detail', entry_id=e.id) }}">
+          <div class="card-top">
+            <span class="dept">{{ e.department }}</span>
+            <span class="stamp stamp-{{ e.validation_process }}">
+              {{ 'AUTO' if e.validation_process == 'auto' else 'SME-REVIEWED' }}
+            </span>
+          </div>
+          <p class="problem">{{ e.summary_problem }}</p>
+          <p class="resolution">{{ e.summary_resolution }}</p>
+          <div class="card-foot mono">
+            <span>{{ e.ticket_number }}</span>
+            <span>acct {{ e.account_number }}</span>
+            <span class="sens-tag">{{ e.sensitivity }}</span>
+          </div>
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
+{% endif %}
+
+{% endblock %}
